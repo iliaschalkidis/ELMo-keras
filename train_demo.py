@@ -1,7 +1,7 @@
 import os
 import keras.backend as K
 
-from data import DATA_SET_DIR, MODELS_DIR
+from data import DATA_SET_DIR
 from elmo.lm_generator import LMDataGenerator
 from elmo.model import ELMo
 
@@ -59,12 +59,13 @@ val_generator = LMDataGenerator(os.path.join(DATA_SET_DIR, parameters['valid_dat
 
 # Compile ELMo
 elmo_model = ELMo(parameters)
-elmo_model.compile_elmo()
-elmo_model.summary()
+elmo_model.compile_elmo(print_summary=True)
 
 # Train ELMo
 elmo_model.train(train_data=train_generator, valid_data=val_generator)
 
+# Persist ELMo Bidirectional Language Model in disk
+elmo_model.save()
+
 # Build ELMo meta-model to deploy for production and persist in disk
-elmo_model.wrap_multi_elmo_encoder()
-elmo_model.save(os.path.join(MODELS_DIR, 'ELMo_Encoder.hd5'))
+elmo_model.wrap_multi_elmo_encoder(print_summary=True, save=True)

@@ -8,7 +8,7 @@ from keras.layers import LSTM, CuDNNLSTM, Activation
 from keras.layers import Lambda, Embedding, Conv2D, GlobalMaxPool1D
 from keras.layers import add, concatenate
 from keras.layers.wrappers import TimeDistributed
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.optimizers import Adagrad
 
 from data import MODELS_DIR
@@ -59,7 +59,7 @@ class ELMo(object):
         token_encoder = Model(inputs=inputs, outputs=token_embeds, name='token_encoding')
         return token_encoder
 
-    def compile_elmo(self):
+    def compile_elmo(self, print_summary=False):
         """
         Compiles a Language Model RNN based on the given parameters
         """
@@ -138,9 +138,8 @@ class ELMo(object):
                             outputs=[outputs, re_outputs])
         self._model.compile(optimizer=Adagrad(lr=self.parameters['lr'], clipvalue=self.parameters['clip_value']),
                             loss=None)
-
-    def summary(self):
-        self._model.summary()
+        if print_summary:
+            self._model.summary()
 
     def train(self, train_data, valid_data):
 
@@ -170,7 +169,7 @@ class ELMo(object):
         # AND COMPUTE LM PERPLEXITY
         raise NotImplementedError
 
-    def wrap_multi_elmo_encoder(self):
+    def wrap_multi_elmo_encoder(self, print_summary=False, save=False):
 
         elmo_embeddings = list()
         elmo_embeddings.append(concatenate([self._model.get_layer('token_encoding').output, self._model.get_layer('token_encoding').output],
@@ -189,8 +188,26 @@ class ELMo(object):
 
         self._elmo_model = Model(inputs=[self._model.get_layer('word_indices').input], outputs=camos)
 
-    def save(self, filename):
-        self._elmo_model.dump(filename)
+        if print_summary:
+            self._elmo_model.summary()
+
+        if save:
+            self._elmo_model.save(os.path.join(MODELS_DIR, 'ELMo_Encoder.hd5'))
+            print('ELMo Encoder saved successfully')
+
+    def save(self):
+        self._model.save(os.path.join(MODELS_DIR, 'ELMo_LM.hd5'))
+        print('ELMo Language Model saved successfully')
+
+    def load(self):
+        self._model = load_model(os.path.join(MODELS_DIR, 'ELMo_LM.hd5'),
+                                 custom_objects={'TimestepDropout': TimestepDropout,
+                                                 'Camouflage': Camouflage})
+
+    def load_elmo_encoder(self):
+        self._elmo_model = load_model(os.path.join(MODELS_DIR, 'ELMo_Encoder.hd5'),
+                                      custom_objects={'TimestepDropout': TimestepDropout,
+                                                      'Camouflage': Camouflage})
 
     @staticmethod
     def reverse(inputs, axes=1):
