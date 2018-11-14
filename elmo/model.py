@@ -164,6 +164,12 @@ class ELMo(object):
 
         print('Training took {0} sec'.format(str(time.time() - t_start)))
 
+    def evaluate(self, test_data):
+        # TODO
+        # GET PREDICTIONS FROM TRAINED MODEL
+        # AND COMPUTE LM PERPLEXITY
+        raise NotImplementedError
+
     def wrap_multi_elmo_encoder(self):
 
         elmo_embeddings = list()

@@ -1,6 +1,6 @@
 <pad> 0
 <unk> 1
-<sos> 2
+<bos> 2
 <eos> 3
 labyrinth 4
 brutal 5

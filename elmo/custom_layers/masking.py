@@ -12,29 +12,13 @@ from keras.engine.base_layer import Layer
 
 class Camouflage(Layer):
     """Masks a sequence by using a mask value to skip timesteps based on another sequence.
+       LSTM and Convolution layers may produce fake tensors for padding timesteps. We need
+       to eliminate those tensors by replicating their initial values presented in the second input.
 
-    For each timestep in the 1st input tensor (dimension #1 in the tensor),
-    if all values in the 2nd input tensor at that timestep
-    are equal to `mask_value`, then the timestep will be masked (skipped)
-    in all downstream layers (as long as they support masking).
-
-    If any downstream layer does not support masking yet receives such
-    an input mask, an exception will be raised.
-
-    # Example
-
-    Consider a Numpy data array `x` of shape `(samples, timesteps, features)`,
-    to be fed to an LSTM layer.
-    You want to mask timestep #3 and #5 because you lack data for
-    these timesteps. You can:
-
-        - set `x[:, 3, :] = 0.` and `x[:, 5, :] = 0.`
-        - insert a `Masking` layer with `mask_value=0.` before the LSTM layer:
-
-    ```python
-        model = Sequential()
-        model.add(SymmetricMasking(inputs=[1,2] mask_value=0.))
-    ```
+       inputs = Input()
+       lstms = LSTM(units=100, return_sequences=True)(inputs)
+       padded_lstms = Camouflage()([lstms, inputs])
+       ...
     """
 
     def __init__(self, mask_value=0., **kwargs):
