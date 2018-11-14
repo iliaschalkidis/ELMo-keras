@@ -1,0 +1,11 @@
+.DS_Store
+*.pyc
+*.pyo
+*.hdf5
+*.f5
+.idea/
+*.ipynb_checkpoints
+data/__pycache__/
+elmo/__pycache__/
+elmo/custom_layers/__pycache__/
+tests/.cache/
