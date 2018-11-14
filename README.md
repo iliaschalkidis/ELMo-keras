@@ -11,6 +11,7 @@ _Stephen Merity, Caiming Xiong, James Bradbury, and Richard Socher. 2016. Pointe
 
 - This was the easiest way to understand ELMo deeply, find its pros and cons and also consider improvements (e.g., make it more computational efficient). 
 - I also consider Keras as the most user-friendly and industry-ready library to work with.
+- Now we are also able to integrate ELMo for practical use at Cognitiv+, where we rely on Keras for our NLP engine.
 - It was really fun! This took me more than a month, in which period I had to learn many things and vastly improve my understading and skills around Keras and Tensorflow, so be kind.
 
 ## How to use it?
