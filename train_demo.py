@@ -12,7 +12,7 @@ parameters = {
     'train_dataset': 'wikitext-2/wiki.train.tokens',
     'valid_dataset': 'wikitext-2/wiki.valid.tokens',
     'test_dataset': 'wikitext-2/wiki.test.tokens',
-    'vocab': 'wikitext-2/wiki.demo.vocab',
+    'vocab': 'wikitext-2/wiki.vocab',
     'vocab_size': 28914,
     'num_sampled': 1000,
     'charset_size': 262,
