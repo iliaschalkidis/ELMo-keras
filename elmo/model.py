@@ -1,6 +1,7 @@
 import os
 import time
 
+import numpy as np
 from keras import backend as K
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.layers import Dense, Input, SpatialDropout1D
@@ -10,6 +11,7 @@ from keras.layers import add, concatenate
 from keras.layers.wrappers import TimeDistributed
 from keras.models import Model, load_model
 from keras.optimizers import Adagrad
+from keras.utils import to_categorical
 
 from data import MODELS_DIR
 from .custom_layers import TimestepDropout, Camouflage, Highway, SampledSoftmax
@@ -75,8 +77,8 @@ class ELMo(object):
             lstm_inputs = TimestepDropout(self.parameters['word_dropout_rate'])(drop_inputs)
 
             # Pass outputs as inputs to apply sampled softmax
-            next_ids = Input(shape=(None, 1), name='next_ids', dtype='int32')
-            previous_ids = Input(shape=(None, 1), name='previous_ids', dtype='int32')
+            next_ids = Input(shape=(None, 1), name='next_ids', dtype='float32')
+            previous_ids = Input(shape=(None, 1), name='previous_ids', dtype='float32')
         elif self.parameters['token_encoding'] == 'char':
             # Train character-level representation
             word_inputs = Input(shape=(None, self.parameters['token_maxlen'],), dtype='int32', name='char_indices')
@@ -147,7 +149,7 @@ class ELMo(object):
         weights_file = os.path.join(MODELS_DIR, "elmo_best_weights.hdf5")
         save_best_model = ModelCheckpoint(filepath=weights_file, monitor='val_loss', verbose=1,
                                           save_best_only=True, mode='auto')
-        early_stopping = EarlyStopping(patience=2, restore_best_weights=True)
+        early_stopping = EarlyStopping(patience=self.parameters['patience'], restore_best_weights=True)
 
         t_start = time.time()
 
@@ -159,17 +161,52 @@ class ELMo(object):
                                   if self.parameters['n_threads'] else os.cpu_count(),
                                   use_multiprocessing=True
                                   if self.parameters['multi_processing'] else False,
-                                  callbacks=[save_best_model, early_stopping])
+                                  callbacks=[save_best_model])
 
         print('Training took {0} sec'.format(str(time.time() - t_start)))
 
     def evaluate(self, test_data):
-        # TODO
-        # GET PREDICTIONS FROM TRAINED MODEL
-        # AND COMPUTE LM PERPLEXITY
-        raise NotImplementedError
+
+        def unpad(x, y_true, y_pred):
+            y_true_unpad = []
+            y_pred_unpad = []
+            for i, x_i in enumerate(x):
+                for j, x_ij in enumerate(x_i):
+                    if x_ij == 0:
+                        y_true_unpad.append(y_true[i][:j])
+                        y_pred_unpad.append(y_pred[i][:j])
+                        break
+            return np.asarray(y_true_unpad), np.asarray(y_pred_unpad)
+
+        # Generate samples
+        x, y_true_forward, y_true_backward = [], [], []
+        for i in range(len(test_data)):
+            test_batch = test_data[i][0]
+            x.extend(test_batch[0])
+            y_true_forward.extend(test_batch[1])
+            y_true_backward.extend(test_batch[2])
+        x = np.asarray(x)
+        y_true_forward = np.asarray(y_true_forward)
+        y_true_backward = np.asarray(y_true_backward)
+
+        # Predict outputs
+        y_pred_forward, y_pred_backward = self._model.predict([x, y_true_forward, y_true_backward])
+
+        # Unpad sequences
+        y_true_forward, y_pred_forward = unpad(x, y_true_forward, y_pred_forward)
+        y_true_backward, y_pred_backward = unpad(x, y_true_backward, y_pred_backward)
+
+        # Compute and print perplexity
+        print('Forward Langauge Model Perplexity: {}'.format(ELMo.perplexity(y_pred_forward, y_true_forward)))
+        print('Backward Langauge Model Perplexity: {}'.format(ELMo.perplexity(y_pred_backward, y_true_backward)))
 
     def wrap_multi_elmo_encoder(self, print_summary=False, save=False):
+        """
+        Wrap ELMo meta-model encoder, which returns an array of the 3 intermediate ELMo outputs
+        :param print_summary: print a summary of the new architecture
+        :param save: persist model
+        :return: None
+        """
 
         elmo_embeddings = list()
         elmo_embeddings.append(concatenate([self._model.get_layer('token_encoding').output, self._model.get_layer('token_encoding').output],
@@ -195,20 +232,46 @@ class ELMo(object):
             self._elmo_model.save(os.path.join(MODELS_DIR, 'ELMo_Encoder.hd5'))
             print('ELMo Encoder saved successfully')
 
-    def save(self):
-        self._model.save(os.path.join(MODELS_DIR, 'ELMo_LM.hd5'))
+    def save(self, sampled_softmax=True):
+        """
+        Persist model in disk
+        :param sampled_softmax: reload model using the full softmax function
+        :return: None
+        """
+        if not sampled_softmax:
+            self.parameters['num_sampled'] = self.parameters['vocab_size']
+        self.compile_elmo()
+        self._model.load_weights(os.path.join(MODELS_DIR, 'elmo_best_weights.hdf5'))
+        self._model.save(os.path.join(MODELS_DIR, 'ELMo_LM_EVAL.hd5'))
         print('ELMo Language Model saved successfully')
 
     def load(self):
-        self._model = load_model(os.path.join(MODELS_DIR, 'ELMo_LM.hd5'),
+        self._model = load_model(os.path.join(MODELS_DIR, 'ELMo_LM.h5'),
                                  custom_objects={'TimestepDropout': TimestepDropout,
                                                  'Camouflage': Camouflage})
 
     def load_elmo_encoder(self):
-        self._elmo_model = load_model(os.path.join(MODELS_DIR, 'ELMo_Encoder.hd5'),
+        self._elmo_model = load_model(os.path.join(MODELS_DIR, 'ELMo_Encoder.h5'),
                                       custom_objects={'TimestepDropout': TimestepDropout,
                                                       'Camouflage': Camouflage})
 
     @staticmethod
     def reverse(inputs, axes=1):
         return K.reverse(inputs, axes=axes)
+
+    @staticmethod
+    def perplexity(y_pred, y_true):
+
+        cross_entropies = []
+        for y_pred_seq, y_true_seq in zip(y_pred, y_true):
+            # Reshape targets to one-hot vectors
+            y_true_seq = to_categorical(y_true_seq, y_pred_seq.shape[-1])
+            # Compute cross_entropy for sentence words
+            cross_entropy = K.categorical_crossentropy(K.tf.convert_to_tensor(y_true_seq, dtype=K.tf.float32),
+                                                       K.tf.convert_to_tensor(y_pred_seq, dtype=K.tf.float32))
+            cross_entropies.extend(cross_entropy.eval(session=K.get_session()))
+
+        # Compute mean cross_entropy and perplexity
+        cross_entropy = np.mean(np.asarray(cross_entropies), axis=-1)
+
+        return pow(2.0, cross_entropy)

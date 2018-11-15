@@ -23,6 +23,7 @@ class SampledSoftmax(Layer):
         self.num_sampled = num_sampled
         self.num_classes = num_classes
         self.tied_to = tied_to
+        self.sampled = (self.num_classes != self.num_sampled)
 
     def build(self, input_shape):
         if self.tied_to is None:
@@ -44,7 +45,6 @@ class SampledSoftmax(Layer):
             batch_losses = K.tf.reduce_mean(batch_losses)
             return [batch_losses, batch_losses]
 
-        # TODO Support full softmax on evaluation mode
         def softmax(x):
             lstm_outputs_batch, next_token_ids_batch = x
             logits = K.tf.matmul(lstm_outputs_batch,
@@ -55,9 +55,9 @@ class SampledSoftmax(Layer):
             batch_losses = K.tf.nn.softmax_cross_entropy_with_logits(labels=labels_one_hot, logits=logits)
             return [batch_losses, batch_predictions]
 
-        losses = K.tf.map_fn(sampled_softmax, [lstm_outputs, next_token_ids])
+        losses, predictions = K.tf.map_fn(sampled_softmax if self.sampled else softmax, [lstm_outputs, next_token_ids])
         self.add_loss(0.5 * K.tf.reduce_mean(losses[0]))
-        return lstm_outputs
+        return lstm_outputs if self.sampled else predictions
 
     def compute_output_shape(self, input_shape):
-        return input_shape[0]
+        return input_shape[0] if self.sampled else (input_shape[0][0], input_shape[0][1], self.num_classes)
