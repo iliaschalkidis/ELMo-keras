@@ -31,7 +31,7 @@ parameters = {
     'train_dataset': 'wikitext-2/wiki.train.tokens',
     'valid_dataset': 'wikitext-2/wiki.valid.tokens',
     'test_dataset': 'wikitext-2/wiki.test.tokens',
-    'vocab': 'wikitext-2/wiki.demo.vocab',
+    'vocab': 'wikitext-2/wiki.vocab',
     'vocab_size': 28914,
     'num_sampled': 1000,
     'charset_size': 262,
@@ -107,7 +107,7 @@ elmo_model.wrap_multi_elmo_encoder(print_summary=True, save=True)
 
 ## What is missing?
 
-- Full softmax projection layer in evaluation mode (TODO)
+- Turn sampled softmax into full softmax dynamically in evaluation mode (TODO) ([Read comment](https://github.com/iliaschalkidis/ELMo-keras/commit/35fa4f9b3245a9c1078d4c7975064b19bd9742f4#commitcomment-31314484))
 - More testing (TODO)
-- Options to build a unidirectional LM
+- Options to build a unidirectional LM (TODO)
 - Proof-reading, you're all welcome!
