@@ -11,6 +11,7 @@ from keras.layers import add, concatenate
 from keras.layers.wrappers import TimeDistributed
 from keras.models import Model, load_model
 from keras.optimizers import Adagrad
+from keras.constraints import MinMaxNorm
 from keras.utils import to_categorical
 
 from data import MODELS_DIR
@@ -99,13 +100,25 @@ class ELMo(object):
         # Forward LSTMs
         for i in range(self.parameters['n_lstm_layers']):
             if self.parameters['cuDNN']:
-                lstm = CuDNNLSTM(units=self.parameters['lstm_units_size'], return_sequences=True)(lstm_inputs)
+                lstm = CuDNNLSTM(units=self.parameters['lstm_units_size'], return_sequences=True,
+                                 kernel_constraint=MinMaxNorm(-1*self.parameters['cell_clip'],
+                                                              self.parameters['cell_clip']),
+                                 recurrent_constraint=MinMaxNorm(-1*self.parameters['cell_clip'],
+                                                                 self.parameters['cell_clip']))(lstm_inputs)
             else:
                 lstm = LSTM(units=self.parameters['lstm_units_size'], return_sequences=True, activation="tanh",
-                            recurrent_activation='sigmoid')(lstm_inputs)
+                            recurrent_activation='sigmoid',
+                            kernel_constraint=MinMaxNorm(-1 * self.parameters['cell_clip'],
+                                                         self.parameters['cell_clip']),
+                            recurrent_constraint=MinMaxNorm(-1 * self.parameters['cell_clip'],
+                                                            self.parameters['cell_clip'])
+                            )(lstm_inputs)
             lstm = Camouflage(mask_value=0)(inputs=[lstm, drop_inputs])
             # Projection to hidden_units_size
-            proj = TimeDistributed(Dense(self.parameters['hidden_units_size'], activation='linear'))(lstm)
+            proj = TimeDistributed(Dense(self.parameters['hidden_units_size'], activation='linear',
+                                         kernel_constraint=MinMaxNorm(-1 * self.parameters['proj_clip'],
+                                                                      self.parameters['proj_clip'])
+                                         ))(lstm)
             # Merge Bi-LSTMs feature vectors with the previous ones
             lstm_inputs = add([proj, lstm_inputs], name='f_block_{}'.format(i + 1))
             # Apply variational drop-out between BI-LSTM layers
@@ -114,13 +127,25 @@ class ELMo(object):
         # Backward LSTMs
         for i in range(self.parameters['n_lstm_layers']):
             if self.parameters['cuDNN']:
-                re_lstm = CuDNNLSTM(units=self.parameters['lstm_units_size'], return_sequences=True)(re_lstm_inputs)
+                re_lstm = CuDNNLSTM(units=self.parameters['lstm_units_size'], return_sequences=True,
+                                    kernel_constraint=MinMaxNorm(-1*self.parameters['cell_clip'],
+                                                                 self.parameters['cell_clip']),
+                                    recurrent_constraint=MinMaxNorm(-1*self.parameters['cell_clip'],
+                                                                    self.parameters['cell_clip']))(lstm_inputs)
             else:
                 re_lstm = LSTM(units=self.parameters['lstm_units_size'], return_sequences=True, activation='tanh',
-                               recurrent_activation='sigmoid')(re_lstm_inputs)
+                               recurrent_activation='sigmoid',
+                               kernel_constraint=MinMaxNorm(-1 * self.parameters['cell_clip'],
+                                                            self.parameters['cell_clip']),
+                               recurrent_constraint=MinMaxNorm(-1 * self.parameters['cell_clip'],
+                                                               self.parameters['cell_clip'])
+                               )(re_lstm_inputs)
             re_lstm = Camouflage(mask_value=0)(inputs=[re_lstm, mask])
             # Projection to hidden_units_size
-            re_proj = TimeDistributed(Dense(self.parameters['hidden_units_size'], activation='linear'))(re_lstm)
+            re_proj = TimeDistributed(Dense(self.parameters['hidden_units_size'], activation='linear',
+                                            kernel_constraint=MinMaxNorm(-1 * self.parameters['proj_clip'],
+                                                                         self.parameters['proj_clip'])
+                                            ))(re_lstm)
             # Merge Bi-LSTMs feature vectors with the previous ones
             re_lstm_inputs = add([re_proj, re_lstm_inputs], name='b_block_{}'.format(i + 1))
             # Apply variational drop-out between BI-LSTM layers
