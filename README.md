@@ -42,6 +42,8 @@ parameters = {
     'patience': 2,
     'batch_size': 1,
     'clip_value': 5,
+    'cell_clip': 5,
+    'proj_clip': 5,
     'lr': 0.2,
     'shuffle': True,
     'n_lstm_layers': 2,
