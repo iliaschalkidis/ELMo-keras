@@ -90,8 +90,8 @@ class ELMo(object):
             lstm_inputs = TimestepDropout(self.parameters['word_dropout_rate'])(drop_inputs)
 
             # Pass outputs as inputs to apply sampled softmax
-            next_ids = Input(shape=(None, 1), name='next_ids', dtype='int32')
-            previous_ids = Input(shape=(None, 1), name='previous_ids', dtype='int32')
+            next_ids = Input(shape=(None, 1), name='next_ids', dtype='float32')
+            previous_ids = Input(shape=(None, 1), name='previous_ids', dtype='float32')
 
         # Reversed input for backward LSTMs
         re_lstm_inputs = Lambda(function=ELMo.reverse)(lstm_inputs)
