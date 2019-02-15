@@ -131,7 +131,7 @@ class ELMo(object):
                                     kernel_constraint=MinMaxNorm(-1*self.parameters['cell_clip'],
                                                                  self.parameters['cell_clip']),
                                     recurrent_constraint=MinMaxNorm(-1*self.parameters['cell_clip'],
-                                                                    self.parameters['cell_clip']))(lstm_inputs)
+                                                                    self.parameters['cell_clip']))(re_lstm_inputs)
             else:
                 re_lstm = LSTM(units=self.parameters['lstm_units_size'], return_sequences=True, activation='tanh',
                                recurrent_activation='sigmoid',
