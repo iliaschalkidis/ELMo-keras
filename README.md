@@ -114,7 +114,7 @@ elmo_model.wrap_multi_elmo_encoder(print_summary=True, save=True)
 - Options to build a unidirectional LM (TODO)
 - Proof-reading, you're all welcome!
 
-## Credits for proof-reading an reporting so far...
+## Credits for proof-reading and reporting so far...
 
 [@seolhokim](https://github.com/seolhokim)
 [@geneva0901](https://github.com/geneva0901)
