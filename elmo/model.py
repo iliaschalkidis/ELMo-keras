@@ -157,7 +157,8 @@ class ELMo(object):
         # Project to Vocabulary with Sampled Softmax
         sampled_softmax = SampledSoftmax(num_classes=self.parameters['vocab_size'],
                                          num_sampled=int(self.parameters['num_sampled']),
-                                         tied_to=embeddings if self.parameters['weight_tying'] else None)
+                                         tied_to=embeddings if self.parameters['weight_tying'] 
+                                         and self.parameters['token_encoding'] == 'word' else None)
         outputs = sampled_softmax([lstm_inputs, next_ids])
         re_outputs = sampled_softmax([re_lstm_inputs, previous_ids])
 
