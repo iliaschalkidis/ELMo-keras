@@ -90,6 +90,6 @@ elmo_model.wrap_multi_elmo_encoder(print_summary=True, save=True)
 elmo_model.load_elmo_encoder()
 
 # Get ELMo embeddings to feed as inputs for downstream tasks
-elmo_embeddings = elmo_model.get_outputs(test_generator, type='words', state='mean')
+elmo_embeddings = elmo_model.get_outputs(test_generator, output_type='words', state='mean')
 
 # BUILD & TRAIN NEW KERAS MODEL FOR DOWNSTREAM TASK (E.G., TEXT CLASSIFICATION)
