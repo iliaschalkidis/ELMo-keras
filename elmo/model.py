@@ -157,7 +157,7 @@ class ELMo(object):
         # Project to Vocabulary with Sampled Softmax
         sampled_softmax = SampledSoftmax(num_classes=self.parameters['vocab_size'],
                                          num_sampled=int(self.parameters['num_sampled']),
-                                         tied_to=embeddings if self.parameters['weight_tying'] 
+                                         tied_to=embeddings if self.parameters['weight_tying']
                                          and self.parameters['token_encoding'] == 'word' else None)
         outputs = sampled_softmax([lstm_inputs, next_ids])
         re_outputs = sampled_softmax([re_lstm_inputs, previous_ids])
@@ -277,9 +277,34 @@ class ELMo(object):
                                                  'Camouflage': Camouflage})
 
     def load_elmo_encoder(self):
-        self._elmo_model = load_model(os.path.join(MODELS_DIR, 'ELMo_Encoder.h5'),
+        self._elmo_model = load_model(os.path.join(MODELS_DIR, 'ELMo_Encoder.hd5'),
                                       custom_objects={'TimestepDropout': TimestepDropout,
                                                       'Camouflage': Camouflage})
+
+    def get_outputs(self, test_data, output_type='word', state='last'):
+        """
+       Wrap ELMo meta-model encoder, which returns an array of the 3 intermediate ELMo outputs
+       :param test_data: data generator
+       :param output_type: "word" for word vectors or "sentence" for sentence vectors
+       :param state: 'last' for 2nd LSTMs outputs or 'mean' for mean-pooling over inputs, 1st LSTMs and 2nd LSTMs
+       :return: None
+       """
+        # Generate samples
+        x = []
+        for i in range(len(test_data)):
+            test_batch = test_data[i][0]
+            x.extend(test_batch[0])
+
+        preds = np.asarray(self._elmo_model.predict(np.asarray(x)))
+        if state == 'last':
+            elmo_vectors = preds[0]
+        else:
+            elmo_vectors = np.mean(preds, axis=0)
+
+        if output_type == 'words':
+            return elmo_vectors
+        else:
+            return np.mean(elmo_vectors, axis=1)
 
     @staticmethod
     def reverse(inputs, axes=1):
