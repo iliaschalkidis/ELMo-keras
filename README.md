@@ -118,3 +118,5 @@ elmo_model.wrap_multi_elmo_encoder(print_summary=True, save=True)
 
 [@seolhokim](https://github.com/seolhokim)
 [@geneva0901](https://github.com/geneva0901)
+[@masepehr](https://github.com/masepehr)
+[@dilaratorunoglu](https://github.com/dilaratorunoglu)
