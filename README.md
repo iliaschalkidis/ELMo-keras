@@ -128,3 +128,4 @@ elmo_embeddings = elmo_model.get_outputs(test_generator, output_type='word', sta
 [@geneva0901](https://github.com/geneva0901)
 [@masepehr](https://github.com/masepehr)
 [@dilaratorunoglu](https://github.com/dilaratorunoglu)
+[@Adherer](https://github.com/Adherer)
