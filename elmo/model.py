@@ -297,7 +297,7 @@ class ELMo(object):
 
         preds = np.asarray(self._elmo_model.predict(np.asarray(x)))
         if state == 'last':
-            elmo_vectors = preds[0]
+            elmo_vectors = preds[-1]
         else:
             elmo_vectors = np.mean(preds, axis=0)
 
