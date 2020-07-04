@@ -1,6 +1,6 @@
 from keras.layers import Layer
 import keras.backend as K
-
+import tensorflow as tf
 
 class SampledSoftmax(Layer):
     """Sampled Softmax, a faster way to train a softmax classifier over a huge number of classes.
@@ -36,27 +36,27 @@ class SampledSoftmax(Layer):
 
         def sampled_softmax(x):
             lstm_outputs_batch, next_token_ids_batch = x
-            batch_losses = K.tf.nn.sampled_softmax_loss(
+            batch_losses = tf.nn.sampled_softmax_loss(
                 self.softmax_W if self.tied_to is None else self.tied_to.weights[0], self.softmax_b,
                 next_token_ids_batch, lstm_outputs_batch,
                 num_classes=self.num_classes,
                 num_sampled=self.num_sampled,
                 partition_strategy='div')
-            batch_losses = K.tf.reduce_mean(batch_losses)
+            batch_losses = tf.reduce_mean(batch_losses)
             return [batch_losses, batch_losses]
 
         def softmax(x):
             lstm_outputs_batch, next_token_ids_batch = x
-            logits = K.tf.matmul(lstm_outputs_batch,
-                                 K.tf.transpose(self.softmax_W) if self.tied_to is None else K.tf.transpose(self.tied_to.weights[0]))
-            logits = K.tf.nn.bias_add(logits, self.softmax_b)
-            batch_predictions = K.tf.nn.softmax(logits)
-            labels_one_hot = K.tf.one_hot(K.tf.cast(next_token_ids_batch, dtype=K.tf.int32), self.num_classes)
-            batch_losses = K.tf.nn.softmax_cross_entropy_with_logits(labels=labels_one_hot, logits=logits)
+            logits = tf.matmul(lstm_outputs_batch,
+                                 tf.transpose(self.softmax_W) if self.tied_to is None else tf.transpose(self.tied_to.weights[0]))
+            logits = tf.nn.bias_add(logits, self.softmax_b)
+            batch_predictions = tf.nn.softmax(logits)
+            labels_one_hot = tf.one_hot(tf.cast(next_token_ids_batch, dtype=tf.int32), self.num_classes)
+            batch_losses = tf.nn.softmax_cross_entropy_with_logits(labels=labels_one_hot, logits=logits)
             return [batch_losses, batch_predictions]
 
-        losses, predictions = K.tf.map_fn(sampled_softmax if self.sampled else softmax, [lstm_outputs, next_token_ids])
-        self.add_loss(0.5 * K.tf.reduce_mean(losses[0]))
+        losses, predictions = tf.map_fn(sampled_softmax if self.sampled else softmax, [lstm_outputs, next_token_ids])
+        self.add_loss(0.5 * tf.reduce_mean(losses[0]))
         return lstm_outputs if self.sampled else predictions
 
     def compute_output_shape(self, input_shape):

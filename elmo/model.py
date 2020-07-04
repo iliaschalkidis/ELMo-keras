@@ -1,6 +1,6 @@
 import os
 import time
-
+import tensorflow as tf
 import numpy as np
 from keras import backend as K
 from keras.callbacks import ModelCheckpoint, EarlyStopping
@@ -318,8 +318,8 @@ class ELMo(object):
             # Reshape targets to one-hot vectors
             y_true_seq = to_categorical(y_true_seq, y_pred_seq.shape[-1])
             # Compute cross_entropy for sentence words
-            cross_entropy = K.categorical_crossentropy(K.tf.convert_to_tensor(y_true_seq, dtype=K.tf.float32),
-                                                       K.tf.convert_to_tensor(y_pred_seq, dtype=K.tf.float32))
+            cross_entropy = K.categorical_crossentropy(tf.convert_to_tensor(y_true_seq, dtype=tf.float32),
+                                                       tf.convert_to_tensor(y_pred_seq, dtype=tf.float32))
             cross_entropies.extend(cross_entropy.eval(session=K.get_session()))
 
         # Compute mean cross_entropy and perplexity
