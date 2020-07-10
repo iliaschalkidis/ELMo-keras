@@ -9,3 +9,5 @@ data/__pycache__/
 elmo/__pycache__/
 elmo/custom_layers/__pycache__/
 tests/.cache/
+*.hd5
+data/datasets/txt/
