@@ -1,7 +1,7 @@
-from keras.layers.core import Layer
-from keras import initializers, regularizers, constraints, activations
-from keras.initializers import Constant
-from keras import backend as K
+from tensorflow.keras.layers import Layer
+from tensorflow.keras import initializers, regularizers, constraints, activations
+from tensorflow.keras.initializers import Constant
+from tensorflow.keras import backend as K
 
 
 class Highway(Layer):

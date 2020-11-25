@@ -2,9 +2,8 @@
 from __future__ import absolute_import
 from __future__ import division
 
-from keras import backend as K
-from keras.engine import InputSpec
-from keras.layers import Dropout
+from tensorflow.keras import backend as K
+from tensorflow.keras.layers import Dropout
 
 
 class TimestepDropout(Dropout):
@@ -29,7 +28,6 @@ class TimestepDropout(Dropout):
 
     def __init__(self, rate, **kwargs):
         super(TimestepDropout, self).__init__(rate, **kwargs)
-        self.input_spec = InputSpec(ndim=3)
 
     def _get_noise_shape(self, inputs):
         input_shape = K.shape(inputs)

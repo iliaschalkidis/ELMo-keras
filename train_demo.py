@@ -1,6 +1,4 @@
 import os
-import keras.backend as K
-
 from data import DATA_SET_DIR
 from elmo.lm_generator import LMDataGenerator
 from elmo.model import ELMo
@@ -8,7 +6,6 @@ from elmo.model import ELMo
 parameters = {
     'multi_processing': False,
     'n_threads': 4,
-    'cuDNN': True if len(K.tensorflow_backend._get_available_gpus()) else False,
     'train_dataset': 'wikitext-2/wiki.train.tokens',
     'valid_dataset': 'wikitext-2/wiki.valid.tokens',
     'test_dataset': 'wikitext-2/wiki.test.tokens',

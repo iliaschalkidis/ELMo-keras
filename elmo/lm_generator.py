@@ -1,9 +1,9 @@
 import numpy as np
-import keras
+import tensorflow as tf
 
 
-class LMDataGenerator(keras.utils.Sequence):
-    """Generates data for Keras"""
+class LMDataGenerator(tf.keras.utils.Sequence):
+    """Generates data for tf.keras"""
 
     def __len__(self):
         """Denotes the number of batches per epoch"""
